@@ -90,7 +90,8 @@ int main(int argc, char **argv)
 #ifndef CHECKERBOARD_KAKURO
   if(reduce_all(startposs) == -1)
   {
-    printf("Found 0 solutions\n");
+    printf("Found 0 solutions\nimpossible");
+    exit(1);
     return 1;
   }
 #else
@@ -672,12 +673,25 @@ void *thread_proc(void *arg)
   }
 }
 
+// disable with 0
+const uint quitLimit = 50000;
+int recurseCount = 0;
+
 void search(int *poss)
 {
   int cl = -1;
   unsigned int minn = 0xFFFFFFFF;
   int maxn = 1;
   int i, j;
+
+  // Heuristic
+	recurseCount++;
+	if (quitLimit && recurseCount > quitLimit)
+	{
+		printf("It's unlikely we will find a solutuion after this many searches\nunlikely");
+		exit(2);
+	}
+
 
   for(i = 0; i < nclues; i++)
   {
@@ -762,7 +776,7 @@ void print_solution(int *poss)
   nsolutions++;
 
   int i, j;
-  printf("Found solution:\n");
+  printf("Found solution after %d iterations:\n", recurseCount);
   for(i = 0; i < height; i++)
   {
     for(j = 0; j < width; j++)
@@ -775,7 +789,7 @@ void print_solution(int *poss)
 
     printf("\n");
   } 		
-  printf("Skipping looking for extra solutions");
+  printf("Skipping looking for extra solutions\npossible");
   exit(0);
 
   printf("\n");
