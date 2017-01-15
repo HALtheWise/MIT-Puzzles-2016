@@ -91,7 +91,7 @@ int main(int argc, char **argv)
   if(reduce_all(startposs) == -1)
   {
     printf("Found 0 solutions\nimpossible");
-    exit(1);
+    exit(2);
     return 1;
   }
 #else
@@ -689,7 +689,7 @@ void search(int *poss)
 	if (quitLimit && recurseCount > quitLimit)
 	{
 		printf("It's unlikely we will find a solutuion after this many searches\nunlikely");
-		exit(2);
+		exit(3);
 	}
 
 
