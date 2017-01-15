@@ -1,0 +1,177 @@
+Kakuro Solver
+By Adam Rosenfield
+
+See the file COPYING for licensing and copying information for this software.
+
+The puzzle files included in this distribution are copyrights of their
+respective owners.
+
+
+OVERVIEW
+
+Kakuro, also known as Cross Sums, is a popular type of logic puzzle.  I'm an
+avid MIT Mystery Hunt participant, and Kakuro variants frequently show up
+there.
+
+In the 2009 Hunt, a puzzle entitled "Cross Something-or-Others" intrigued me.
+My team solved it by hand, but after the hunt ended, I decided to write a
+generic Kakuro solver, which is now what you have before you.  The solver is
+intended to be as generic as possible, so that it can solve as many possible
+Kakuro variants out-of-the-box and so that it can be easily modified to solve
+other variants that haven't been thought of yet.
+
+It also designed from the ground up to be fast.  It makes heavy use of bitflags
+for data representation and the x86 "bsf" and "bsr" instructions (bit-scan
+forward and bit-scan reverse); to compile for non-x86 platforms, you'll need to
+modify these two functions to use either a generic (but slower) C routine or
+the equivalent instructions on your platform.
+
+Likewise, it is also multithreaded, using the POSIX threads library (pthreads).
+This should work on any platform supporting pthreads (including Cygwin).  If
+you want to port it to a platform not supporting pthreads such as Windows,
+you'll need to use your platform's threading library (or nuke the threading
+entirely).  Other than those two issues, this program should be completely
+portable to anything with a C compiler.
+
+Of course, even though the solver is heavily optimized, it can still take a
+huge amount of time to solve some puzzles.  Kakuro is NP-complete (at least
+according to Wikipedia), so large enough puzzles will always take a
+super-polynomial amount of time to solve.  If the solver has been churning away
+for more than 5-10 minutes or so, it's likely not going to finish in any
+reasonable amount of time, and you should start solving by hand.
+
+
+USAGE
+
+First, compile the program on your target machine by running "make".  Then,
+figure out how many physical cores your CPU has (I have no idea if you should
+take hyperthreading into account; I'd guess not, since this program is
+entirely CPU-bound, and I think hyperthreading does better with memory-bound
+and I/O-bound tasks, but I could be wrong).
+
+Next, set up your puzzle file (see PUZZLE FILES).  Decide which Kakuro variant
+solver you want to use (see VARIANTS).  Finally, run as follows:
+
+./kakuro-variant -threads=N puzzle-file
+
+Where kakuro-variant is the name of the solver executable you want to use, N is
+the number of CPU cores you have, and puzzle-file is the name of the puzzle
+file.  You can use more threads than CPU cores, but performance will not
+increase; in fact, it will decrease a little bit, due to increased overhead
+from context switching.
+
+Solutions will be printed out as they are found.  The entire puzzle space will
+be searched, in case there are multiple solutions.  Of course, if you are
+running with more than one thread, they could be printed out in any order; if
+you have one thread, the order will be deterministic (but not necessarily
+lexicographical).  If the search completes with no solutions found, a message
+indicating that will be printed, and you likely either have an error in the
+puzzle file, or there is some other gimmick in the puzzle that you haven't
+yet figured out (you might not have the correct set of allowed numbers, for
+example).
+
+
+VARIANTS
+
+Most of the variants supported are based on the variants from Cross
+Something-Or-Others.  First and foremost, the solver can solve puzzles where
+the set of allowable digits in a cell is any arbitrary subset of the numbers
+0-31.  This includes plain Kakuro (1-9), Zero Kakuro (0-9), Hexadecimal Kakuro
+(1-15), etc.
+
+Other variants that can be solved:
+
+Blackjack Kakuro: Each 1 entered into the grid can be counted as either 1 or
+  11.  A 1 can also count for a 1 in one direction and 11 in the other
+  direction.
+
+Checkerboard Kakuro: The cells in the grid alternate in parity, so that even
+  numbers must only be adjacent to odd numbers and vice-versa, like the squares
+  of a checkerboard.
+
+Composite Kakuro: Each entry, when read as one big number, must be a composite
+  (non-prime) number.
+
+Duplicate Kakuro: Each entry must have exactly one duplicated digit.
+
+Mistaken Kakuro: Each clue is either one smaller or one larger than what the
+  actual sum should be for the entry.
+
+Multiplication Kakuro: Each clue is the product (instead of the sum) of the
+  numbers in its cells.
+
+Nonconsecutive Kakuro: No two adjacent cells may ever be consecutive numbers.
+
+Note that Nonsense Kakuro is not actually Kakuro and is actually the key to
+extracting the final answer to Cross Something-Or-Others.
+
+One variant that this solver cannot yet solve is that from The Joy of
+Accountancy.  It's probably doable, I just haven't done it yet.
+
+
+PUZZLE FILES
+
+Puzzles are specified in a text representation that is designed to be as easy
+as possible to type in quickly when given the pictorial version of a puzzle.
+See the various included puzzle files in the puzzles/ directory for examples.
+First comes the width and height of the puzzle, then the number of numbers
+which can appear as legal values in the puzzle cells, and then that set of
+numbers (e.g. "6 1 3 4 6 8 9" specifies that the 6 digits 1,3,4,6,8,9 are the
+only allowed numbers in the puzzle).  All numbers from 0-30 are supported; it
+is possible to extend this to 0-63 if you change the data storage from int's
+to uint64_t's and are careful about some things.
+
+After that come the puzzle cells, WIDTH*HEIGHT of them in total.  A cell can be
+one of these (without the quotes):
+
+"." specifies a white cell in the puzzle to be filled in with a number
+"#" specifies a black cell in the puzzle
+"(number)\" specifies a clue reading down, e.g. "3\"
+"\(number)" specifies a clue reading across, e.g. "\3"
+"(number)\(number)" specifies clues reading both down and across in that order,
+  e.g. "3\4"
+
+Whitespace is ignored.  The puzzle reading code attempts to detect some errors
+but it is not foolproof; some errors may not be reported, in which case you'll
+likely see it quickly terminate with 0 solutions or churn away for a very long
+time without producing any solutions.
+
+
+EXAMPLE PUZZLES
+
+The following puzzles are provided in the puzzles/ folder as examples:
+
+03-some-stars
+  "Some Stars", 2003 MIT Mystery Hunt, by Matt Sakai
+  http://www.mit.edu/~puzzle/03/www.acme-corp.com/teamGuest/6/6_7.html
+
+05-express-yourself
+  "Express Yourself", 2005 MIT Mystery Hunt, by Dave Savitt and Tim Peeters
+  http://www.mit.edu/~puzzle/05/setec/express_yourself/
+
+07-the-joy-of-accountancy
+  "The Joy of Accountancy", 2007 MIT Mystery Hunt, by Thomas Snyder
+  http://www.mit.edu/~puzzle/07/puzzles/the_joy_of_accountancy/
+
+08-cursed
+  "Cursed", 2008 MIT Mystery Hunt, by Sofiya Cremin
+  http://web.mit.edu/puzzle/www/08/cursed/
+
+09-cross-something-or-others-1-mistaken
+09-cross-something-or-others-2-blackjack
+09-cross-something-or-others-3-checkerboard
+09-cross-something-or-others-4-duplicate
+09-cross-something-or-others-5-nonconsecutive
+09-cross-something-or-others-6-zero
+09-cross-something-or-others-7-missingdigits
+09-cross-something-or-others-8-composite
+  "Cross Something-Or-Others", 2009 MIT Mystery Hunt, by Thomas Snyder and Dan
+    Katz
+  http://www.mit.edu/~puzzle/09/puzzles/cross_somethingorothers/PUZZLE/JLN-index.html
+
+nonconsecutive-puzzle
+  Source forgotten (please let me know if you know where this came from!)
+
+ogygia
+  "Ogygia", 2007 Are We There Yet, by Mark Halpin
+  http://www.markhalpin.com/AWTYweb/AWTYpdfs/AWTYcalypso.pdf
