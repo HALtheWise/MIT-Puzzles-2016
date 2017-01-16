@@ -7,15 +7,22 @@ print "hello world"
 
 template = Template(open('template.txt').read())
 
-productVals = {'da':9,'db':36,'aa':9,'ab':9}
+productVals = {'aa':28, 'da':25, 'ab':280, 'db':406, 'ac':506, 'dc':1023, 'ad':992, 'dd':870, 'ae':88, 'de':84,
+             'af':68, 'df':1640, 'ag':63, 'dg':12, 'ah':437, 'dh':348, 'ai':266, 'di':209, 'aj':114, 'dj':136,
+             'ak':588, 'dk':810, 'al':18, 'dl':88, 'am':196, 'dm':190, 'an':256, 'dn':1054, 'ao':595, 'do':110,
+             'ap':1073, 'dp':208, 'aq':220, 'ar':144}
 
-testOrder = 'da db aa ab'.split(' ')
+testOrder = ['aa', 'da', 'ab', 'db', 'ac', 'dc', 'ad', 'dd', 'ae', 'de',
+             'af', 'df', 'ag', 'dg', 'ah', 'dh', 'ai', 'di', 'aj', 'dj',
+             'ak', 'dk', 'al', 'dl', 'am', 'dm', 'an', 'dn', 'ao', 'do',
+             'ap', 'dp', 'aq', 'ar']
 
-values = range(1, 50)
+values = range(1, 100)
 
 startVals = {k:'' for k in testOrder}
 
 def recurse(numAssigned, vals):
+    print '  '*numAssigned+str(vals)
     if numAssigned >= len(testOrder):
         global numTests
         print 'End reached at {}... {}'.format(numTests, vals)
@@ -53,7 +60,7 @@ numTests = 0
 
 def testBoard(vals={'a':5,'b':6}, verbose=False):
     board = template.substitute(vals)
-    board = board.replace(' \\ ','#') # Remove blank cases
+    board = board.replace(' \\ ',' # ') # Remove blank cases
 
     global numTests
     numTests += 1
@@ -87,4 +94,5 @@ def testBoard(vals={'a':5,'b':6}, verbose=False):
         
         if verbose:
             print 'Probably no solutions'
+        print 'uncertain on {}'.format(numTests)
         return False
